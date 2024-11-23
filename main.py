@@ -1,11 +1,11 @@
 import random
-from csv import reader, writer, Dialect, register_dialect
+from csv import reader, writer, Dialect, register_dialect, QUOTE_MINIMAL
 from pprint import pprint
 from xml.dom.minidom import parseString
 
 
+# noinspection SpellCheckingInspection
 class NormalCSV(Dialect):
-    from _csv import QUOTE_MINIMAL
     delimiter = ';'
     quotechar = '"'
     doublequote = True
@@ -38,10 +38,13 @@ def task2(file="books.csv", output_file="result.csv"):
         out_csv.writerow(head_row)
         head = {s: i for i, s in enumerate(head_row)}
         for row in in_csv:
-            if int(row[head["Дата поступления"]].split()[0].split(".")[-1]) < 2018:
+            date = row[head["Дата поступления"]].split()[0]
+            year = int(date.split(".")[-1])
+            if year < 2018:
                 continue
-            if search in row[head["Автор (ФИО)"]].lower() \
-                    or search in row[head["Автор"]].lower():
+            if search in row[head["Автор (ФИО)"]].lower():
+                out_csv.writerow(row)
+            elif search in row[head["Автор"]].lower():
                 out_csv.writerow(row)
 
 
@@ -54,10 +57,13 @@ def task3(file="books.csv", output_file="result.txt", num_of_books=20):
     while len(set(nums)) != num_of_books:
         nums = [random.randrange(0, len(rows)) for _ in range(num_of_books)]
     with open(output_file, "w", encoding="windows-1251") as output:
-        for row in map(rows.__getitem__, nums):
+        for num in nums:
+            row = rows[num]
+            date = row[head["Дата поступления"]].split()[0]
+            year = int(date.split(".")[-1])
             print(f"{row[head['Автор']]}."
                   f" {row[head['Название']]}"
-                  f" - {int(row[head['Дата поступления']].split()[0].split('.')[-1])}", file=output)
+                  f" - {year}", file=output)
 
 
 def task4(file="currency.xml", key="Name", value="CharCode"):
@@ -65,7 +71,9 @@ def task4(file="currency.xml", key="Name", value="CharCode"):
         tree = parseString(xmlfile.read())
     output_dict = {}
     for node in tree.firstChild.childNodes:
-        output_dict[node.getElementsByTagName(key)[0].firstChild.data] = node.getElementsByTagName(value)[0].firstChild.data
+        key_data = node.getElementsByTagName(key)[0].firstChild.data
+        value_data = node.getElementsByTagName(value)[0].firstChild.data
+        output_dict[key_data] = value_data
     return output_dict
 
 
